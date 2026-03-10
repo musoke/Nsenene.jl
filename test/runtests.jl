@@ -1,6 +1,6 @@
 using Nsenene
 using Test
 
-@testset "Nsenene.jl" begin
-    # Write your tests here.
+@testset "Aqua.jl" begin
+    include("aqua.jl")
 end
