@@ -8,16 +8,9 @@ makedocs(;
     authors="Nathan Musoke <nathan.musoke@gmail.com> and contributors",
     sitename="Nsenene.jl",
     format=Documenter.HTML(;
-        canonical="https://musoke.github.io/Nsenene.jl",
-        edit_link="main",
-        assets=String[],
+        canonical="https://musoke.github.io/Nsenene.jl", edit_link="main", assets=String[]
     ),
-    pages=[
-        "Home" => "index.md",
-    ],
+    pages=["Home" => "index.md"],
 )
 
-deploydocs(;
-    repo="github.com/musoke/Nsenene.jl",
-    devbranch="main",
-)
+deploydocs(; repo="github.com/musoke/Nsenene.jl", devbranch="main")
