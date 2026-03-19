@@ -15,6 +15,21 @@ function SphericalProfile(resol::Integer, length::Real, n::Integer)
     return SphericalProfile(r, psi)
 end
 
+function densities(profile::SphericalProfile, m)
+    psi2 = abs2.(profile.psi)
+
+    return out = m .* psi2
+end
+
+"""
+    density(profile::SphericalProfile, m)
+
+Calculate the total mass density of `profile` with particle masses `m`.
+"""
+function density(profile::SphericalProfile, m)
+    return sum(densities(profile, m); dims=1)
+end
+
 """
     total_masses(r, psi, m)
 
