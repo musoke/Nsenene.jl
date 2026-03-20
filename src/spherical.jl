@@ -5,23 +5,20 @@ import LinearAlgebra: Tridiagonal
 G = 1
 
 struct SphericalProfile
-    r::Matrix{Float64}
+    r::Vector{Float64}
     psi::Matrix{Complex{Float16}}
 end
 
 function SphericalProfile(resol::Integer, length::Real, n::Integer)
     r = range(length / (resol + 1), length, resol)  # FIXME: is this the best way to address r=0?
-    # For easier broadcasting later
-    r = reshape(r, (1, resol))
-
-    psi = zeros(Complex{Float16}, n, resol)
+    psi = zeros(Complex{Float64}, resol, n)
 
     return SphericalProfile(r, psi)
 end
 
 function dr_element(profile::SphericalProfile)
     r = profile.r
-    return dr = diff(r; dims=2)[1]
+    return dr = diff(r)[1]
 end
 
 function densities(profile::SphericalProfile, m)
@@ -36,7 +33,8 @@ end
 Calculate the total mass density of `profile` with particle masses `m`.
 """
 function density(profile::SphericalProfile, m)
-    return sum(densities(profile, m); dims=1)
+    out = sum(densities(profile, m); dims=2)
+    return reshape(out, :)
 end
 
 """
@@ -49,14 +47,15 @@ Calculate the mass contained by each field with radial coordinates `r` and parti
 ```jldoctest
 import Nsenene.spherical: total_masses
 
-N = 1000
+resol = 1000
+nfields = 2
 
-m = [1.0, 1.0]
-r = range(0, 10, N)
-psi = zeros(2, N)
+m = ones(1, nfields)
+r = range(0, 10, resol)
+psi = zeros(resol, nfields)
 
 # Ball of radius 1
-psi[1, r.<1] .= 1
+psi[r.<1, 1] .= 1
 
 M = total_masses(psi, r, m)
 
@@ -72,17 +71,15 @@ function total_masses(psi, r, m)
     n = size(psi, 1)
     resol = size(psi, 2)
 
-    r = reshape(r, (1, resol))
+    @assert size(psi, 1) === size(r, 1)
+    @assert size(psi, 2) === size(m, 2)
 
-    @assert size(psi, 2) === size(r, 2)
-    @assert size(psi, 1) === size(m, 1)
+    dr = diff(r)[1]
+    M = sum(4π * r .^ 2 .* abs2.(psi); dims=1) .* m * dr
 
-    dr = diff(r; dims=2)[1]
-    M = sum(4π * r .^ 2 .* abs2.(psi); dims=2) .* m * dr
+    @assert size(m) === size(M)
 
-    # @assert size(m) === size(M)
-
-    return M[:, 1]
+    return M[1, :]
 end
 
 """
@@ -96,13 +93,13 @@ Calculate the mass contained by each field with radial coordinates `r` and parti
 import Nsenene.spherical: SphericalProfile, total_masses
 
 n = 3
-m = ones(n)
+m = ones(1, n)
 
 p = SphericalProfile(1000, 3.0, n)
 
 # Ball of radius 1
-p.psi[1, :] .= p.r[1, :] .< 1
-p.psi[2, :] .= p.r[1, :] .< 2
+p.psi[:, 1] .= p.r .< 1
+p.psi[:, 2] .= p.r .< 2
 
 M = total_masses(p, m)
 
@@ -137,14 +134,14 @@ end
 function gravitational_potential(profile, m)
     dr = dr_element(profile)
     r = profile.r
-    resol = size(r, 2)
+    resol = size(r, 1)
 
     u = similar(r)
-    rho = density(profile, m)[1, :]
+    rho = density(profile, m)
 
     D = d2_dr2(resol)
 
-    u[1, :] .= D \ (r[1, :] .* rho)
+    u .= D \ reshape(r .* rho, resol)
 
     u *= 4 * pi * G * dr^2
 
