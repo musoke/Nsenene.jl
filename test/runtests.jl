@@ -9,6 +9,10 @@ doctest(Nsenene)
     include("density.jl")
 end
 
+@testset "gravitational potential" begin
+    include("gravitational_potential.jl")
+end
+
 @testset "Aqua.jl" begin
     include("aqua.jl")
 end

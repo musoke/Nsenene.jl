@@ -1,7 +1,11 @@
 module spherical
 
+import LinearAlgebra: Tridiagonal
+
+G = 1
+
 struct SphericalProfile
-    r::Matrix{Float16}
+    r::Matrix{Float64}
     psi::Matrix{Complex{Float16}}
 end
 
@@ -13,6 +17,11 @@ function SphericalProfile(resol::Integer, length::Real, n::Integer)
     psi = zeros(Complex{Float16}, n, resol)
 
     return SphericalProfile(r, psi)
+end
+
+function dr_element(profile::SphericalProfile)
+    r = profile.r
+    return dr = diff(r; dims=2)[1]
 end
 
 function densities(profile::SphericalProfile, m)
@@ -116,6 +125,30 @@ end
 
 function total_mass(profile::SphericalProfile, m)
     return total_mass(profile.psi, profile.r, m)
+end
+
+function d2_dr2(resol)
+    out = Tridiagonal(ones(resol - 1), -2 * ones(resol), ones(resol - 1))
+    out[resol, resol] = -1.0
+
+    return out
+end
+
+function gravitational_potential(profile, m)
+    dr = dr_element(profile)
+    r = profile.r
+    resol = size(r, 2)
+
+    u = similar(r)
+    rho = density(profile, m)[1, :]
+
+    D = d2_dr2(resol)
+
+    u[1, :] .= D \ (r[1, :] .* rho)
+
+    u *= 4 * pi * G * dr^2
+
+    return Phi = u ./ r
 end
 
 end

@@ -1,7 +1,11 @@
 name = "Nsenene"
 uuid = "7ecba323-2937-4d78-a503-023e665eed2b"
-authors = ["Nathan Musoke <nathan.musoke@gmail.com> and contributors"]
 version = "1.0.0-DEV"
+authors = ["Nathan Musoke <nathan.musoke@gmail.com> and contributors"]
+
+[deps]
+LinearAlgebra = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"
 
 [compat]
+LinearAlgebra = "1.12.0"
 julia = "1.12"
