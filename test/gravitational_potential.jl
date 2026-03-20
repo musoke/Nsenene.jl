@@ -2,12 +2,12 @@ import Nsenene.spherical: SphericalProfile, gravitational_potential, total_mass
 
 resol = 1_000
 nfields = 3
-m = 1:nfields
+m = reshape(1:nfields, 1, nfields)
 
 profile = SphericalProfile(resol, 1.0, nfields)
-r = profile.r[1, :]
+r = profile.r
 
-profile.psi[1, :] .= 100 * exp.(-10r .^ 2)[1, :]
+profile.psi[:, 1] .= 100 * exp.(-10r .^ 2)
 
 Phi = gravitational_potential(profile, m)
 
