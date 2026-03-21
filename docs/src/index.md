@@ -10,5 +10,5 @@ Documentation for [Nsenene](https://github.com/musoke/Nsenene.jl).
 ```
 
 ```@autodocs
-Modules = [Nsenene]
+Modules = [Nsenene, Nsenene.spherical]
 ```
