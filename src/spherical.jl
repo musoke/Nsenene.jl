@@ -85,7 +85,8 @@ end
 """
     total_masses(profile::SphericalProfile, m)
 
-Calculate the mass contained by each field with radial coordinates `r` and particle masses `m`.
+Calculate the mass contained by each field in `profile`, with particle masses `m`.
+Returns an array of masses.
 
 # Examples
 
@@ -120,6 +121,29 @@ function total_mass(psi, r, m)
     return sum(total_masses(psi, r, m))
 end
 
+"""
+    total_mass(profile::SphericalProfile, m)
+
+Calculate the total mass contained in `profile`, with particle masses `m`.
+Returns a scalar.
+
+# Examples
+
+```jldoctest
+import Nsenene.spherical: SphericalProfile, total_mass
+
+n = 3
+m = ones(1, n)
+
+p = SphericalProfile(1000, 3.0, n)
+
+M = total_mass(p, m)
+
+# output
+
+0.0
+```
+"""
 function total_mass(profile::SphericalProfile, m)
     return total_mass(profile.psi, profile.r, m)
 end
