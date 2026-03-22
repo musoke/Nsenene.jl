@@ -35,7 +35,7 @@ maximum(p.R)
 struct CylindricalProfile
     R::Array{Float64,2}
     z::Array{Float64,2}
-    psi::Array{Complex{Float16},3}
+    psi::Array{Complex{Float64},3}
 end
 
 function CylindricalProfile(
