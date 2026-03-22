@@ -9,6 +9,10 @@ doctest(Nsenene)
     include("density.jl")
 end
 
+@testset "total mass" begin
+    include("total_mass.jl")
+end
+
 @testset "gravitational potential" begin
     include("gravitational_potential.jl")
 end

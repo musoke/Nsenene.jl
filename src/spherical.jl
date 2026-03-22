@@ -4,6 +4,7 @@ import LinearAlgebra: Tridiagonal
 
 import ..densities
 import ..density
+import ..total_masses
 
 G = 1
 
@@ -30,14 +31,14 @@ function density(profile::SphericalProfile, m)
 end
 
 """
-    total_masses(r, psi, m)
+    _total_masses(r, psi, m)
 
-Calculate the mass contained by each field with radial coordinates `r` and particle masses `m`.
+Calculate the mass contained by each field of `psi` with radial coordinates `r` and particle masses `m`.
 
 # Examples
 
 ```jldoctest
-import Nsenene.Spherical: total_masses
+import Nsenene.Spherical: _total_masses
 
 resol = 1000
 nfields = 2
@@ -49,7 +50,7 @@ psi = zeros(resol, nfields)
 # Ball of radius 1
 psi[r.<1, 1] .= 1
 
-M = total_masses(psi, r, m)
+M = _total_masses(psi, r, m)
 
 @assert isapprox(M[1], 4/3 * π * 1^3, atol=1e-1)
 M[2]
@@ -59,10 +60,7 @@ M[2]
 0.0
 ```
 """
-function total_masses(psi, r, m)
-    n = size(psi, 1)
-    resol = size(psi, 2)
-
+function _total_masses(psi, r, m)
     @assert size(psi, 1) === size(r, 1)
     @assert size(psi, 2) === size(m, 2)
 
@@ -71,73 +69,11 @@ function total_masses(psi, r, m)
 
     @assert size(m) === size(M)
 
-    return M[1, :]
+    return reshape(M, :)
 end
 
-"""
-    total_masses(profile::SphericalProfile, m)
-
-Calculate the mass contained by each field in `profile`, with particle masses `m`.
-Returns an array of masses.
-
-# Examples
-
-```jldoctest
-import Nsenene.Spherical: SphericalProfile, total_masses
-
-n = 3
-m = ones(1, n)
-
-p = SphericalProfile(1000, 3.0, n)
-
-# Ball of radius 1
-p.psi[:, 1] .= p.r .< 1
-p.psi[:, 2] .= p.r .< 2
-
-M = total_masses(p, m)
-
-@assert isapprox(M[1], 4/3 * π * 1^3, rtol=1e-2)
-@assert isapprox(M[2], 4/3 * π * 2^3, rtol=1e-2)
-M[3]
-
-# output
-
-0.0
-```
-"""
 function total_masses(profile::SphericalProfile, m)
-    return total_masses(profile.psi, profile.r, m)
-end
-
-function total_mass(psi, r, m)
-    return sum(total_masses(psi, r, m))
-end
-
-"""
-    total_mass(profile::SphericalProfile, m)
-
-Calculate the total mass contained in `profile`, with particle masses `m`.
-Returns a scalar.
-
-# Examples
-
-```jldoctest
-import Nsenene.Spherical: SphericalProfile, total_mass
-
-n = 3
-m = ones(1, n)
-
-p = SphericalProfile(1000, 3.0, n)
-
-M = total_mass(p, m)
-
-# output
-
-0.0
-```
-"""
-function total_mass(profile::SphericalProfile, m)
-    return total_mass(profile.psi, profile.r, m)
+    return _total_masses(profile.psi, profile.r, m)
 end
 
 function d2_dr2(resol)

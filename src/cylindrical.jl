@@ -4,6 +4,7 @@ import LinearAlgebra: Tridiagonal
 
 import ..densities
 import ..density
+import ..total_masses
 
 G = 1
 
@@ -55,6 +56,33 @@ end
 function density(profile::CylindricalProfile, m)
     out = sum(densities(profile, m); dims=3)
     return dropdims(out; dims=3)
+end
+
+function dR_element(profile::CylindricalProfile)
+    R = profile.R
+    return diff(R; dims=1)[1]
+end
+
+function dz_element(profile::CylindricalProfile)
+    z = profile.z
+    return diff(z; dims=2)[1]
+end
+
+function total_masses(profile::CylindricalProfile, m)
+    @assert size(profile.psi, 3) === size(m, 3)
+
+    R = profile.R
+    z = profile.z
+    psi = profile.psi
+
+    dR = dR_element(profile)
+    dz = dz_element(profile)
+
+    M = sum(R .* abs2.(psi); dims=(1, 2)) .* m * 2pi * dR * dz
+
+    @assert size(m) === size(M)
+
+    return reshape(M, :)
 end
 
 end
