@@ -4,6 +4,7 @@ import LinearAlgebra: Tridiagonal
 
 import ..densities
 import ..density
+import ..gravitational_potential
 import ..total_masses
 
 G = 1
@@ -83,7 +84,7 @@ function d2_dr2(resol)
     return out
 end
 
-function gravitational_potential(profile, m)
+function gravitational_potential(profile::SphericalProfile, m)
     dr = dr_element(profile)
     r = profile.r
     resol = size(r, 1)
