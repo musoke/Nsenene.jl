@@ -10,7 +10,7 @@ G = 1
 
 struct SphericalProfile
     r::Vector{Float64}
-    psi::Matrix{Complex{Float16}}
+    psi::Matrix{Complex{Float64}}
 end
 
 function SphericalProfile(resol::Integer, length::Real, nfields::Integer)
@@ -97,8 +97,8 @@ function gravitational_potential(profile, m)
     r = profile.r
     resol = size(r, 1)
 
-    u = similar(r)
     rho = density(profile, m)
+    u = similar(rho)
 
     D = d2_dr2(resol)
 
