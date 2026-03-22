@@ -2,6 +2,7 @@ module Nsenene
 
 export density
 export total_mass, total_masses
+export gravitational_potential
 
 export CylindricalProfile
 export SphericalProfile
@@ -95,6 +96,8 @@ M[3]
 ```
 """
 function total_masses end
+
+function gravitational_potential end
 
 include("cylindrical.jl")
 include("spherical.jl")
