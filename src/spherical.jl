@@ -1,6 +1,9 @@
-module spherical
+module Spherical
 
 import LinearAlgebra: Tridiagonal
+
+import ..densities
+import ..density
 
 G = 1
 
@@ -9,9 +12,9 @@ struct SphericalProfile
     psi::Matrix{Complex{Float16}}
 end
 
-function SphericalProfile(resol::Integer, length::Real, n::Integer)
+function SphericalProfile(resol::Integer, length::Real, nfields::Integer)
     r = range(length / (resol + 1), length, resol)  # FIXME: is this the best way to address r=0?
-    psi = zeros(Complex{Float64}, resol, n)
+    psi = zeros(Complex{Float64}, resol, nfields)
 
     return SphericalProfile(r, psi)
 end
@@ -21,20 +24,9 @@ function dr_element(profile::SphericalProfile)
     return dr = diff(r)[1]
 end
 
-function densities(profile::SphericalProfile, m)
-    psi2 = abs2.(profile.psi)
-
-    return out = m .* psi2
-end
-
-"""
-    density(profile::SphericalProfile, m)
-
-Calculate the total mass density of `profile` with particle masses `m`.
-"""
 function density(profile::SphericalProfile, m)
     out = sum(densities(profile, m); dims=2)
-    return reshape(out, :)
+    return dropdims(out; dims=2)
 end
 
 """
@@ -45,7 +37,7 @@ Calculate the mass contained by each field with radial coordinates `r` and parti
 # Examples
 
 ```jldoctest
-import Nsenene.spherical: total_masses
+import Nsenene.Spherical: total_masses
 
 resol = 1000
 nfields = 2
@@ -91,7 +83,7 @@ Returns an array of masses.
 # Examples
 
 ```jldoctest
-import Nsenene.spherical: SphericalProfile, total_masses
+import Nsenene.Spherical: SphericalProfile, total_masses
 
 n = 3
 m = ones(1, n)
@@ -130,7 +122,7 @@ Returns a scalar.
 # Examples
 
 ```jldoctest
-import Nsenene.spherical: SphericalProfile, total_mass
+import Nsenene.Spherical: SphericalProfile, total_mass
 
 n = 3
 m = ones(1, n)
