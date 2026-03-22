@@ -1,5 +1,6 @@
+import Nsenene: total_mass
 import Nsenene: SphericalProfile
-import Nsenene.Spherical: gravitational_potential, total_mass
+import Nsenene.Spherical: gravitational_potential
 
 resol = 1_000
 nfields = 3
