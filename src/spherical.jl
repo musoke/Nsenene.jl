@@ -78,9 +78,18 @@ end
 
 function d2_dr2(resol)
     out = Tridiagonal(ones(resol - 1), -2 * ones(resol), ones(resol - 1))
+    # Assume derivand is 0 at end-1
+
+    # Assymptote at R=R_max
     out[resol, resol] = -1.0
 
     return out
+end
+
+function d2_dr2(profile::SphericalProfile)
+    resol_r = size(profile.r, 1)
+
+    return d2_dr2(resol_r)
 end
 
 function gravitational_potential(profile, m)

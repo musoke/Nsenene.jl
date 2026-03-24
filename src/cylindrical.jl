@@ -85,4 +85,48 @@ function total_masses(profile::CylindricalProfile, m)
     return reshape(M, :)
 end
 
+function d1_dR1(resol_R)
+    out = 0.5 * Tridiagonal(-ones(resol_R - 1), zeros(resol_R), ones(resol_R - 1))
+
+    # # Asymptote at R=0
+    # out[begin, begin] = 0.5
+
+    # # Asymptote at R=end
+    # out[end, end] = 0.5
+
+    # Forward difference at R=0
+    out[begin, begin] = -1
+    out[begin, begin + 1] = 1
+
+    # Backward difference at R=end
+    out[end, end - 1] = -1
+    out[end, end] = 1
+
+    return out
+end
+
+function d1_dR1(profile::CylindricalProfile)
+    resol_R = size(profile.R, 1)
+
+    return d1_dR1(resol_R)
+end
+
+function d2_dR2(resol_R)
+    out = Tridiagonal(ones(resol_R - 1), -2 * ones(resol_R), ones(resol_R - 1))
+
+    # Assymptote at R=0
+    out[begin, begin] = -1.0
+
+    # Assymptote at R=R_max
+    out[end, end] = -1.0
+
+    return out
+end
+
+function d2_dR2(profile::CylindricalProfile)
+    resol_R = size(profile.R, 1)
+
+    return d2_dR2(resol_R)
+end
+
 end

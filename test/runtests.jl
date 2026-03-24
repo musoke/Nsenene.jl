@@ -13,6 +13,10 @@ end
     include("total_mass.jl")
 end
 
+@testset "derivatives" begin
+    include("derivatives.jl")
+end
+
 @testset "gravitational potential" begin
     include("gravitational_potential.jl")
 end
