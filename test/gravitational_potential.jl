@@ -10,7 +10,7 @@ function radius(p::CylindricalProfile)
     return @. (p.R^2 + p.z^2)^0.5
 end
 
-resol = 1_000
+resol = 1024
 length = 1.0
 nfields = 2
 m_ = 1:nfields
@@ -25,16 +25,15 @@ m_ = 1:nfields
 
     selectdim(profile.psi, ndims(m), 1) .= 100 * exp.(-10r .^ 2)
 
-    if profile isa CylindricalProfile
-        continue
-    end
-
     Phi = gravitational_potential(profile, m)
 
     M = total_mass(profile, m)
     Phi_approx = -M ./ r
 
-    @test size(Phi) == size(profile.r)
+    @test size(Phi) == size(r)
 
+    # TODO: This could break if r[end] is not at large radius
     @test Phi[end] ≈ Phi_approx[end] rtol = 1e-2
+
+    @test all(Phi .<= 0.0)
 end

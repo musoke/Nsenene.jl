@@ -3,12 +3,16 @@ uuid = "7ecba323-2937-4d78-a503-023e665eed2b"
 version = "1.0.0-DEV"
 authors = ["Nathan Musoke <nathan.musoke@gmail.com> and contributors"]
 
+[workspace]
+projects = ["benchmarks", "docs", "test"]
+
 [deps]
+AbstractFFTs = "621f4979-c628-5d54-868e-fcf4e3e8185c"
+FFTW = "7a1cc6ca-52ef-59f5-83cd-3a7055c09341"
 LinearAlgebra = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"
 
 [compat]
+AbstractFFTs = "1.5.0"
+FFTW = "1.10.0"
 LinearAlgebra = "1.12.0"
 julia = "1.12"
-
-[workspace]
-projects = ["benchmarks", "docs", "test"]

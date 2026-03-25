@@ -97,6 +97,11 @@ M[3]
 """
 function total_masses end
 
+"""
+    gravitational_potential(profile, m)
+
+Compute the gravitational potential due to the fields in `profile` with particle masses `m`.
+"""
 function gravitational_potential end
 
 include("cylindrical.jl")
