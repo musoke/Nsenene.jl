@@ -4,7 +4,7 @@ version = "1.0.0-DEV"
 authors = ["Nathan Musoke <nathan.musoke@gmail.com> and contributors"]
 
 [workspace]
-projects = ["benchmarks", "docs", "test"]
+projects = ["benchmark", "docs", "test"]
 
 [deps]
 AbstractFFTs = "621f4979-c628-5d54-868e-fcf4e3e8185c"
