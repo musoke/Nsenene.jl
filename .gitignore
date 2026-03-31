@@ -4,3 +4,8 @@
 # /Manifest*.toml
 /docs/Manifest*.toml
 /docs/build/
+
+# AirspeedVelocity outputs
+/*.png
+/*.json
+/*.json.tmp
