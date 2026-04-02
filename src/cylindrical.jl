@@ -46,10 +46,10 @@ end
 function CylindricalProfile(
     resol_R::Integer, resol_z::Integer, length_R::Real, length_z::Real, nfields::Integer
 )
-    R = reshape(range(length_R / (resol_R + 1), length_R, resol_R), :, 1)  # FIXME: is this the best way to address R=0?
-    z = reshape(range(-length_z / 2, +length_z / 2, resol_z), 1, :)
+    R = reshape(range(length_R / (resol_R + 1), length_R, resol_R), 1, :)  # FIXME: is this the best way to address R=0?
+    z = reshape(range(-length_z / 2, +length_z / 2, resol_z), :, 1)
 
-    psi = zeros(Complex{Float64}, resol_R, resol_z, nfields)
+    psi = zeros(Complex{Float64}, resol_z, resol_R, nfields)
 
     return CylindricalProfile(R, z, psi)
 end
@@ -65,12 +65,12 @@ end
 
 function dR_element(profile::CylindricalProfile)
     R = profile.R
-    return diff(R; dims=1)[1]
+    return diff(R; dims=2)[1]
 end
 
 function dz_element(profile::CylindricalProfile)
     z = profile.z
-    return diff(z; dims=2)[1]
+    return diff(z; dims=1)[1]
 end
 
 function total_masses(profile::CylindricalProfile, m)
@@ -111,7 +111,7 @@ function d1_dR1(resol_R)
 end
 
 function d1_dR1(profile::CylindricalProfile)
-    resol_R = size(profile.R, 1)
+    resol_R = size(profile.R, 2)
 
     return d1_dR1(resol_R)
 end
@@ -129,7 +129,7 @@ function d2_dR2(resol_R)
 end
 
 function d2_dR2(profile::CylindricalProfile)
-    resol_R = size(profile.R, 1)
+    resol_R = size(profile.R, 2)
 
     return d2_dR2(resol_R)
 end
@@ -137,27 +137,31 @@ end
 function gravitational_potential(profile::CylindricalProfile, m)
     dR = dR_element(profile)
     R = profile.R
-    resol_R = size(R, 1)
+    resol_R = size(R, 2)
 
     dz = dz_element(profile)
     z = profile.z
-    resol_z = size(z, 2)
+    resol_z = size(z, 1)
     kz = AbstractFFTs.rfftfreq(resol_z, 2pi / dz)
 
     M = total_mass(profile, m)
     rho = density(profile, m)
 
-    fftz = AbstractFFTs.plan_rfft(rho, 2)
+    fftz = AbstractFFTs.plan_rfft(rho, 1)
 
     rho_Rk = fftz * rho
     rho_Rk .*= 4 * pi * G
 
     Phi_Rk = similar(rho_Rk)
 
-    phi_boundary = -G * M ./ sqrt.(R[end]^2 .+ z[1, :] .^ 2)
+    phi_boundary = -G * M ./ sqrt.(R[1, end]^2 .+ z[:, 1] .^ 2)
     phi_boundary_k = AbstractFFTs.rfft(phi_boundary, 1)
 
-    _D = Tridiagonal(1 ./ R .* d1_dR1(profile) / dR) + Tridiagonal(d2_dR2(profile) / dR^2)
+    @assert size(phi_boundary_k) == size(kz)
+
+    _D =
+        Tridiagonal(1 ./ transpose(R) .* d1_dR1(profile) / dR) +
+        Tridiagonal(d2_dR2(profile) / dR^2)
 
     for (i, kz) in enumerate(kz)
         D = _D - UniformScaling(kz^2)
@@ -169,12 +173,12 @@ function gravitational_potential(profile::CylindricalProfile, m)
         # Enforce boundary condition on Phi_Rk at R=Rmax
         D[end, end - 1] = 0
         D[end, end] = 1
-        rho_Rk[end, i] = phi_boundary_k[i]
+        rho_Rk[i, end] = phi_boundary_k[i]
 
-        Phi_Rk[:, i] .= D \ rho_Rk[:, i]
+        Phi_Rk[i, :] .= D \ rho_Rk[i, :]
     end
 
-    Phi = AbstractFFTs.irfft(Phi_Rk, resol_z, 2)
+    Phi = AbstractFFTs.irfft(Phi_Rk, resol_z, 1)
 
     return Phi
 end
