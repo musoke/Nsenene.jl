@@ -1,6 +1,6 @@
 import Nsenene: total_mass
 import Nsenene: gravitational_potential
-import Nsenene: kick!
+import Nsenene: kick!, drift!
 
 function radius(p::SphericalProfile)
     return p.r
@@ -33,6 +33,21 @@ m_ = 1:nfields
     # Imaginary time kick should decrease density everywhere
     @test all(density_new .< density_old)
 
+    # Density should remain 0 in fields that were initially 0
+    for field in 2:nfields
+        @test iszero(selectdim(profile.psi, ndims(m), field))
+    end
+
+    if profile isa CylindricalProfile
+        continue
+    end
+
+    density_old = density(profile, m)
+    drift!(profile, m, 1e-1im)
+    density_new = density(profile, m)
+
+    # Imaginary time kick should decrease density everywhere
+    @test all(density_new .<= density_old)
     # Density should remain 0 in fields that were initially 0
     for field in 2:nfields
         @test iszero(selectdim(profile.psi, ndims(m), field))

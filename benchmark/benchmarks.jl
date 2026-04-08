@@ -1,6 +1,6 @@
 using BenchmarkTools
 using Nsenene
-using Nsenene: kick!
+using Nsenene: kick!, drift!
 
 const SUITE = BenchmarkGroup()
 
@@ -31,3 +31,6 @@ SUITE["gravitational_potential"]["spherical"] = @benchmarkable gravitational_pot
 SUITE["kick!"] = BenchmarkGroup()
 SUITE["kick!"]["cylindrical"] = @benchmarkable kick!(pc, ones(1, 1, nfields), 1e-9im)
 SUITE["kick!"]["spherical"] = @benchmarkable kick!(ps, ones(1, nfields), 1e-9im)
+
+SUITE["drift!"] = BenchmarkGroup()
+SUITE["drift!"]["spherical"] = @benchmarkable drift!(ps, ones(1, nfields), 1e-9im)

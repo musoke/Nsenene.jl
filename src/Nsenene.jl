@@ -21,6 +21,8 @@ function kick!(profile, m, h)
     return profile
 end
 
+function drift! end
+
 """
     densities(profile, m)
 
