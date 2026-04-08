@@ -77,20 +77,20 @@ function total_masses(profile::SphericalProfile, m)
     return _total_masses(profile.psi, profile.r, m)
 end
 
-function d2_dr2(resol)
+function d2_dr2_vanish_r0(resol)
     out = Tridiagonal(ones(resol - 1), -2 * ones(resol), ones(resol - 1))
-    # Assume derivand is 0 at end-1
+    # Assume derivand is 0 at begin-1
 
-    # Assymptote at R=R_max
+    # Asymptote at R=R_max
     out[resol, resol] = -1.0
 
     return out
 end
 
-function d2_dr2(profile::SphericalProfile)
+function d2_dr2_vanish_r0(profile::SphericalProfile)
     resol_r = size(profile.r, 1)
 
-    return d2_dr2(resol_r)
+    return d2_dr2_vanish_r0(resol_r)
 end
 
 function gravitational_potential(profile::SphericalProfile, m)
@@ -101,7 +101,7 @@ function gravitational_potential(profile::SphericalProfile, m)
     rho = density(profile, m)
     u = similar(rho)
 
-    D = d2_dr2(resol)
+    D = d2_dr2_vanish_r0(resol)
 
     u .= D \ reshape(r .* rho, resol)
 
