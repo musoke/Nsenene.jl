@@ -1,5 +1,6 @@
 using BenchmarkTools
 using Nsenene
+using Nsenene: kick!
 
 const SUITE = BenchmarkGroup()
 
@@ -26,3 +27,7 @@ SUITE["gravitational_potential"]["cylindrical"] = @benchmarkable gravitational_p
 SUITE["gravitational_potential"]["spherical"] = @benchmarkable gravitational_potential(
     ps, ones(1, nfields)
 )
+
+SUITE["kick!"] = BenchmarkGroup()
+SUITE["kick!"]["cylindrical"] = @benchmarkable kick!(pc, ones(1, 1, nfields), 1e-9im)
+SUITE["kick!"]["spherical"] = @benchmarkable kick!(ps, ones(1, nfields), 1e-9im)

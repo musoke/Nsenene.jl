@@ -8,6 +8,20 @@ export CylindricalProfile
 export SphericalProfile
 
 """
+    kick(profile, h, m)
+"""
+function kick!(profile, m, h)
+    psi = profile.psi
+
+    V = m .* gravitational_potential(profile, m)
+    @assert size(V) == size(profile.psi)
+
+    psi .*= exp.(-im * h .* V)
+
+    return profile
+end
+
+"""
     densities(profile, m)
 
 Calculate the mass density of each field in `profile`, with particle masses `m`.

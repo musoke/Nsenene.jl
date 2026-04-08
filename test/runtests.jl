@@ -21,6 +21,10 @@ end
     include("gravitational_potential.jl")
 end
 
+@testset "kick" begin
+    include("kick.jl")
+end
+
 @testset "Aqua.jl" begin
     include("aqua.jl")
 end
