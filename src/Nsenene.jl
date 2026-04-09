@@ -7,6 +7,23 @@ export gravitational_potential
 export CylindricalProfile
 export SphericalProfile
 
+function kick_drift_kick!(profile, h, m, target_masses, nsteps)
+    half_step = true
+
+    for step in 1:nsteps
+        kick!(profile, m, h / 2)
+        drift!(profile, m, h)
+        kick!(profile, m, h / 2)
+
+        new_masses = total_masses(profile, m)
+
+        # Careful of fields with no mass
+        mass_ratios = target_masses ./ (new_masses + (new_masses .== 0))
+
+        profile.psi .*= reshape(mass_ratios, size(m)) .^ 0.5
+    end
+end
+
 """
     kick(profile, h, m)
 """
