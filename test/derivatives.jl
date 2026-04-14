@@ -46,6 +46,9 @@ end
     p = SphericalProfile(resol, length, nfields)
 
     dr2 = Spherical.d2_dr2(p)
+    dr2_vanish_r0 = Spherical.d2_dr2_vanish_r0(p)
+
+    @assert dr2[(begin + 1):end, :] == dr2_vanish_r0[(begin + 1):end, :]
 
     @test dr2 isa Tridiagonal
     @test size(dr2) == (resol, resol)
