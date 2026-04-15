@@ -141,9 +141,12 @@ function laplacian(profile::SphericalProfile)
     resol_r = size(r, 1)
 
     d1 = d1_dr1(resol_r) / dr
+    d1 .*= 2 ./ r
+    @assert d1 isa Tridiagonal
     d2 = d2_dr2(resol_r) / dr^2
+    @assert d2 isa Tridiagonal
 
-    return 2 ./ r .* d1 + d2
+    return d1 + d2
 end
 
 function gravitational_potential(profile::SphericalProfile, m)
