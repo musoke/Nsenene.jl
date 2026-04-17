@@ -26,8 +26,9 @@ function drift!(profile::SphericalProfile, m, h)
     psi = profile.psi
 
     laplace = laplacian(profile)
+    explap = exp(-im * h / 2 .* (laplace))
 
-    psi .*= exp.(-im * h / 2 ./ m .* (laplace * psi))
+    psi .= 1 ./ m .* (explap * psi)
 
     return profile
 end
