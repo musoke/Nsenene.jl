@@ -2,6 +2,7 @@ module Spherical
 
 import LinearAlgebra: Tridiagonal
 
+import ..compute_explaps
 import ..drift!
 import ..densities
 import ..density
@@ -22,15 +23,26 @@ function SphericalProfile(resol::Integer, length::Real, nfields::Integer)
     return SphericalProfile(r, psi)
 end
 
-function drift!(profile::SphericalProfile, m, h)
+function drift!(profile::SphericalProfile, m, h::Real, explap)
     psi = profile.psi
 
-    laplace = laplacian(profile)
-    explap = exp(-im * h / 2 .* (laplace))
-
-    psi .= 1 ./ m .* (explap * psi)
+    for field in 1:length(m)
+        psi[:, field] .= (explap[:, :, field] * (profile.r .* psi[:, field])) ./ profile.r # u
+    end
 
     return profile
+end
+
+function compute_explaps(profile::SphericalProfile, m, h)
+    resol = size(profile.psi, 1)
+    nfields = size(profile.psi, 2)
+
+    explaps = zeros(resol, resol, nfields)
+    for field in 1:nfields
+        explaps[:, :, field] .= exp(-h / 2 / m[1, field] * laplacian_u(profile))
+    end
+
+    return explaps
 end
 
 function dr_element(profile::SphericalProfile)
@@ -119,6 +131,12 @@ function d1_dr1(resol_r)
     return out
 end
 
+function d1_dr1(profile::SphericalProfile)
+    resol_r = size(profile.r, 1)
+
+    return d1_dr1(resol_r)
+end
+
 function d2_dr2(resol)
     out = Tridiagonal(ones(resol - 1), -2 * ones(resol), ones(resol - 1))
     # Assume derivand has f[begin-1] = f[begin]
@@ -137,17 +155,25 @@ function d2_dr2(profile::SphericalProfile)
 end
 
 function laplacian(profile::SphericalProfile)
-    r = profile.r
     dr = dr_element(profile)
-    resol_r = size(r, 1)
 
-    d1 = d1_dr1(resol_r) / dr
-    d1 .*= 2 ./ r
+    resol_r = size(profile.r, 1)
+
+    d1 = d1_dr1(profile) / dr
+    d1 .*= 2 ./ profile.r
     @assert d1 isa Tridiagonal
-    d2 = d2_dr2(resol_r) / dr^2
+    d2 = d2_dr2(profile) / dr^2
     @assert d2 isa Tridiagonal
 
     return d1 + d2
+end
+
+function laplacian_u(profile::SphericalProfile)
+    dr = dr_element(profile)
+
+    out = d2_dr2_vanish_r0(profile) / dr^2
+
+    return out
 end
 
 function gravitational_potential(profile::SphericalProfile, m)

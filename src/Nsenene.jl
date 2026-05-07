@@ -10,9 +10,11 @@ export SphericalProfile
 function kick_drift_kick!(profile, h, m, target_masses, nsteps)
     half_step = true
 
+    explaps = compute_explaps(profile, m, h)
+
     for step in 1:nsteps
         kick!(profile, m, h / 2)
-        drift!(profile, m, h)
+        drift!(profile, m, h, explaps)
         kick!(profile, m, h / 2)
 
         new_masses = total_masses(profile, m)
@@ -35,12 +37,21 @@ function kick!(profile, m, h)
     V = m .* gravitational_potential(profile, m)
     @assert size(V) == size(profile.psi)
 
-    psi .*= exp.(-im * h .* V)
+    psi .*= exp.(-h .* V)
 
     return profile
 end
 
 function drift! end
+
+function compute_explaps end
+
+function max_time_step(profile, phi)
+    max_time_step_gravity = 2π / maximum(abs.(phi))
+    max_time_step_pressure = 2π * 2 / maximum(Spherical.laplacian(profile))
+
+    return min(max_time_step_gravity, max_time_step_pressure)
+end
 
 """
     densities(profile, m)
