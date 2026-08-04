@@ -48,8 +48,7 @@ end
 function CylindricalProfile(
     resol_R::Integer, resol_z::Integer, length_R::Real, length_z::Real, nfields::Integer
 )
-    R = reshape(range(1e-9, length_R, resol_R), 1, :)  # FIXME: is this the best way to address R=0?
-    # R = reshape(range(length_R / (resol_R + 1), length_R, resol_R), 1, :)  # FIXME: is this the best way to address R=0?
+    R = reshape(range(length_R / (resol_R + 1), length_R, resol_R), 1, :)  # FIXME: is this the best way to address R=0?
     z = reshape(range(-length_z / 2, +length_z / 2, resol_z), :, 1)
 
     psi = zeros(Complex{Float64}, resol_z, resol_R, nfields)
@@ -132,9 +131,9 @@ function d1_dR1(resol_R)
     # # Asymptote at R=end
     # out[end, end] = 0.5
 
-    # Vanishing first derivative at R=0
-    out[begin, begin] = 0
-    out[begin, begin + 1] = 0
+    # Forward difference at R=0
+    out[begin, begin] = -1
+    out[begin, begin + 1] = 1
 
     # Backward difference at R=end
     out[end, end - 1] = -1
@@ -152,9 +151,8 @@ end
 function d2_dR2(resol_R)
     out = Tridiagonal(ones(resol_R - 1), -2 * ones(resol_R), ones(resol_R - 1))
 
-    # d/dR=0 at R=0
-    out[begin, begin] = -2.0
-    out[begin, begin + 1] = 2.0
+    # Assymptote at R=0
+    out[begin, begin] = -1.0
 
     # Assymptote at R=R_max
     out[end, end] = -1.0
@@ -190,9 +188,6 @@ function laplacian_R(profile)
 
     d1 = Tridiagonal(1 ./ transpose(R) .* d1_dR1(profile) / dR)
     d2 = Tridiagonal(d2_dR2(profile) / dR^2)
-
-    # L'Hopital applied to 1/R d/dR at R=0
-    d1[begin, 1:end] .= d2[begin, 1:end]
 
     out = d1 + d2
 
