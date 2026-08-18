@@ -79,12 +79,12 @@ function compute_explaps(profile::CylindricalProfile, m, h)
 
     explap_z = zeros(resol_z, resol_z, nfields)
     for field in 1:nfields
-        explap_z[:, :, field] .= exp(-h / 2 / m[1, 1, field] * laplacian_z(profile))
+        explap_z[:, :, field] .= exp(+h / 2 / m[1, 1, field] * laplacian_z(profile))
     end
 
     explap_R = zeros(resol_R, resol_R, nfields)
     for field in 1:nfields
-        explap_R[:, :, field] .= exp(-h / 2 / m[1, 1, field] * laplacian_R(profile))
+        explap_R[:, :, field] .= exp(+h / 2 / m[1, 1, field] * laplacian_R(profile))
     end
 
     return (explap_z, explap_R)
