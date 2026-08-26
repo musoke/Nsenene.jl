@@ -7,6 +7,7 @@ import ..drift!
 import ..densities
 import ..density
 import ..gravitational_potential
+import ..max_time_step
 import ..total_masses
 
 G = 1
@@ -43,6 +44,13 @@ function compute_explaps(profile::SphericalProfile, m, h)
     end
 
     return explaps
+end
+
+function max_time_step(profile::SphericalProfile)
+
+    dr = dr_element(profile)
+
+    return dr^2/π
 end
 
 function dr_element(profile::SphericalProfile)

@@ -10,6 +10,7 @@ import ..densities
 import ..density
 import ..drift!
 import ..gravitational_potential
+import ..max_time_step
 import ..total_masses
 import ..total_mass
 
@@ -88,6 +89,14 @@ function compute_explaps(profile::CylindricalProfile, m, h)
     end
 
     return (explap_z, explap_R)
+end
+
+function max_time_step(profile::CylindricalProfile)
+
+    dR = dR_element(profile)
+    dz = dz_element(profile)
+
+    return min(dR, dz)^2/π
 end
 
 function density(profile::CylindricalProfile, m)

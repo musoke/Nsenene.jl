@@ -46,12 +46,7 @@ function drift! end
 
 function compute_explaps end
 
-function max_time_step(profile, phi)
-    max_time_step_gravity = 2π / maximum(abs.(phi))
-    max_time_step_pressure = 2π * 2 / maximum(Spherical.laplacian(profile))
-
-    return min(max_time_step_gravity, max_time_step_pressure)
-end
+function max_time_step end
 
 """
     densities(profile, m)
