@@ -2,7 +2,7 @@ module Spherical
 
 import LinearAlgebra: Tridiagonal
 
-import ..compute_explaps
+import ..compute_explaps_imag
 import ..drift!
 import ..densities
 import ..density
@@ -35,7 +35,7 @@ function drift!(profile::SphericalProfile, m, h::Real, explap)
     return profile
 end
 
-function compute_explaps(profile::SphericalProfile, m, h)
+function compute_explaps_imag(profile::SphericalProfile, m, h)
     resol = size(profile.psi, 1)
     nfields = size(profile.psi, 2)
 

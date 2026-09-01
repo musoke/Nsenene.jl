@@ -5,7 +5,7 @@ import LinearAlgebra: UniformScaling, Tridiagonal
 using AbstractFFTs: AbstractFFTs
 using FFTW: FFTW
 
-import ..compute_explaps
+import ..compute_explaps_imag
 import ..densities
 import ..density
 import ..drift!
@@ -73,7 +73,7 @@ function drift!(profile::CylindricalProfile, m, h::Real, explap)
     return profile
 end
 
-function compute_explaps(profile::CylindricalProfile, m, h)
+function compute_explaps_imag(profile::CylindricalProfile, m, h)
     resol_z = size(profile.psi, 1)
     resol_R = size(profile.psi, 2)
     nfields = size(profile.psi, 3)

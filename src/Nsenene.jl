@@ -10,7 +10,7 @@ export SphericalProfile
 function kick_drift_kick!(profile, h, m, target_masses, nsteps)
     half_step = true
 
-    explaps = compute_explaps(profile, m, h)
+    explaps = compute_explaps_imag(profile, m, h)
 
     for step in 1:nsteps
         kick!(profile, m, h / 2)
@@ -44,7 +44,7 @@ end
 
 function drift! end
 
-function compute_explaps end
+function compute_explaps_imag end
 
 function max_time_step end
 
