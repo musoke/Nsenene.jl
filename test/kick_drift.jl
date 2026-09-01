@@ -1,7 +1,7 @@
 import Nsenene: total_mass
 import Nsenene: gravitational_potential
 import Nsenene: kick!, drift!
-import Nsenene: compute_explaps
+import Nsenene: compute_explaps_imag
 
 function radius(p::SphericalProfile)
     return p.r
@@ -11,7 +11,7 @@ function radius(p::CylindricalProfile)
     return @. (p.R^2 + p.z^2)^0.5
 end
 
-resol = 1024
+resol = 256
 length = 1.0
 nfields = 3
 m_ = 1:nfields
@@ -40,11 +40,7 @@ h = 1e-10
         @test iszero(selectdim(profile.psi, ndims(m), field))
     end
 
-    if profile isa CylindricalProfile
-        continue
-    end
-
-    explaps = compute_explaps(profile, m, h)
+    explaps = compute_explaps_imag(profile, m, h)
     density_old = density(profile, m)
     drift!(profile, m, h, explaps)
     density_new = density(profile, m)
