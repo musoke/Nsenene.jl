@@ -5,9 +5,12 @@ import LinearAlgebra: UniformScaling, Tridiagonal
 using AbstractFFTs: AbstractFFTs
 using FFTW: FFTW
 
+import ..compute_explaps_imag
 import ..densities
 import ..density
+import ..drift!
 import ..gravitational_potential
+import ..max_time_step
 import ..total_masses
 import ..total_mass
 
@@ -56,6 +59,44 @@ end
 
 function CylindricalProfile(resol::Integer, length::Real, nfields::Integer)
     return CylindricalProfile(resol, resol, length, length, nfields)
+end
+
+function drift!(profile::CylindricalProfile, m, h::Real, explap)
+    psi = profile.psi
+
+    explap_z, explap_R = explap
+
+    for field in 1:length(m)
+        psi[:, :, field] .=
+            explap_z[:, :, field] * psi[:, :, field] * transpose(explap_R[:, :, field])
+    end
+
+    return profile
+end
+
+function compute_explaps_imag(profile::CylindricalProfile, m, h)
+    resol_z = size(profile.psi, 1)
+    resol_R = size(profile.psi, 2)
+    nfields = size(profile.psi, 3)
+
+    explap_z = zeros(resol_z, resol_z, nfields)
+    for field in 1:nfields
+        explap_z[:, :, field] .= exp(+h / 2 / m[1, 1, field] * laplacian_z(profile))
+    end
+
+    explap_R = zeros(resol_R, resol_R, nfields)
+    for field in 1:nfields
+        explap_R[:, :, field] .= exp(+h / 2 / m[1, 1, field] * laplacian_R(profile))
+    end
+
+    return (explap_z, explap_R)
+end
+
+function max_time_step(profile::CylindricalProfile)
+    dR = dR_element(profile)
+    dz = dz_element(profile)
+
+    return min(dR, dz)^2 / π
 end
 
 function density(profile::CylindricalProfile, m)
@@ -132,6 +173,42 @@ function d2_dR2(profile::CylindricalProfile)
     resol_R = size(profile.R, 2)
 
     return d2_dR2(resol_R)
+end
+
+function d2_dz2(resol)
+    out = Tridiagonal(ones(resol - 1), -2 * ones(resol), ones(resol - 1))
+
+    # Vanish at z=z_min
+
+    # Vanish at z=z_max
+
+    return out
+end
+
+function d2_dz2(profile::CylindricalProfile)
+    resol_z = size(profile.z, 1)
+
+    return d2_dz2(resol_z)
+end
+
+function laplacian_R(profile)
+    R = profile.R
+    dR = dR_element(profile)
+
+    d1 = Tridiagonal(1 ./ transpose(R) .* d1_dR1(profile) / dR)
+    d2 = Tridiagonal(d2_dR2(profile) / dR^2)
+
+    out = d1 + d2
+
+    return out
+end
+
+function laplacian_z(profile)
+    dz = dz_element(profile)
+
+    d2 = Tridiagonal(d2_dz2(profile) / dz^2)
+
+    return d2
 end
 
 function gravitational_potential(profile::CylindricalProfile, m)

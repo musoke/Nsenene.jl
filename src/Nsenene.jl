@@ -7,6 +7,47 @@ export gravitational_potential
 export CylindricalProfile
 export SphericalProfile
 
+function kick_drift_kick!(profile, h, m, target_masses, nsteps)
+    half_step = true
+
+    explaps = compute_explaps_imag(profile, m, h)
+
+    for step in 1:nsteps
+        kick!(profile, m, h / 2)
+        drift!(profile, m, h, explaps)
+        kick!(profile, m, h / 2)
+
+        new_masses = total_masses(profile, m)
+
+        # Careful of fields with no mass
+        mass_ratios = target_masses ./ (new_masses + (new_masses .== 0))
+
+        profile.psi .*= reshape(mass_ratios, size(m)) .^ 0.5
+
+        @assert !any(isnan.(profile.psi))
+    end
+end
+
+"""
+    kick(profile, h, m)
+"""
+function kick!(profile, m, h)
+    psi = profile.psi
+
+    V = m .* gravitational_potential(profile, m)
+    @assert size(V) == size(profile.psi)
+
+    psi .*= exp.(-h .* V)
+
+    return profile
+end
+
+function drift! end
+
+function compute_explaps_imag end
+
+function max_time_step end
+
 """
     densities(profile, m)
 

@@ -2,9 +2,12 @@ module Spherical
 
 import LinearAlgebra: Tridiagonal
 
+import ..compute_explaps_imag
+import ..drift!
 import ..densities
 import ..density
 import ..gravitational_potential
+import ..max_time_step
 import ..total_masses
 
 G = 1
@@ -19,6 +22,35 @@ function SphericalProfile(resol::Integer, length::Real, nfields::Integer)
     psi = zeros(Complex{Float64}, resol, nfields)
 
     return SphericalProfile(r, psi)
+end
+
+function drift!(profile::SphericalProfile, m, h::Real, explap)
+    psi = profile.psi
+
+    for field in 1:length(m)
+        psi[:, field] .= (explap[:, :, field] * (profile.r .* psi[:, field])) ./ profile.r # u
+        # psi[:, field] .= explap[:, :, field] * psi[:, field] # psi (not u)
+    end
+
+    return profile
+end
+
+function compute_explaps_imag(profile::SphericalProfile, m, h)
+    resol = size(profile.psi, 1)
+    nfields = size(profile.psi, 2)
+
+    explaps = zeros(resol, resol, nfields)
+    for field in 1:nfields
+        explaps[:, :, field] .= exp(+h / 2 / m[1, field] * laplacian_u(profile))
+    end
+
+    return explaps
+end
+
+function max_time_step(profile::SphericalProfile)
+    dr = dr_element(profile)
+
+    return dr^2 / π
 end
 
 function dr_element(profile::SphericalProfile)
@@ -77,12 +109,58 @@ function total_masses(profile::SphericalProfile, m)
     return _total_masses(profile.psi, profile.r, m)
 end
 
+function d2_dr2_vanish_r0(resol)
+    out = Tridiagonal(ones(resol - 1), -2 * ones(resol), ones(resol - 1))
+    # Assume derivand is 0 at begin-1
+
+    # Asymptote at R=R_max
+    out[resol, resol] = -1.0
+
+    return out
+end
+
+function d2_dr2_vanish_r0(profile::SphericalProfile)
+    resol_r = size(profile.r, 1)
+
+    return d2_dr2_vanish_r0(resol_r)
+end
+
+function d1_dr1(resol_r)
+    out = 0.5 * Tridiagonal(-ones(resol_r - 1), zeros(resol_r), ones(resol_r - 1))
+
+    # Forward difference at r=begin
+    out[begin, begin] = -1
+    out[begin, begin + 1] = 1
+
+    # Backward difference at r=end
+    out[end, end - 1] = -1
+    out[end, end] = 1
+
+    return out
+end
+
+function d1_dr1(profile::SphericalProfile)
+    resol_r = size(profile.r, 1)
+
+    return d1_dr1(resol_r)
+end
+
 function d2_dr2(resol)
     out = Tridiagonal(ones(resol - 1), -2 * ones(resol), ones(resol - 1))
-    # Assume derivand is 0 at end-1
+    # Assume derivand has f[begin-1] = f[begin]
+    out[begin, begin] = -1.0
 
-    # Assymptote at R=R_max
+    # Asymptote at R=R_max
     out[resol, resol] = -1.0
+
+    # out = Matrix(out)
+    # out[begin, 1] = 1
+    # out[begin, 2] = -2
+    # out[begin, 3] = 1
+
+    # out[end, end] = 1
+    # out[end, end-1] = -2
+    # out[end, end-2] = 1
 
     return out
 end
@@ -93,6 +171,28 @@ function d2_dr2(profile::SphericalProfile)
     return d2_dr2(resol_r)
 end
 
+function laplacian(profile::SphericalProfile)
+    dr = dr_element(profile)
+
+    resol_r = size(profile.r, 1)
+
+    d1 = d1_dr1(profile) / dr
+    d1 .*= 2 ./ profile.r
+    @assert d1 isa Tridiagonal
+    d2 = d2_dr2(profile) / dr^2
+    @assert d2 isa Tridiagonal
+
+    return d1 + d2
+end
+
+function laplacian_u(profile::SphericalProfile)
+    dr = dr_element(profile)
+
+    out = d2_dr2_vanish_r0(profile) / dr^2
+
+    return out
+end
+
 function gravitational_potential(profile::SphericalProfile, m)
     dr = dr_element(profile)
     r = profile.r
@@ -101,7 +201,7 @@ function gravitational_potential(profile::SphericalProfile, m)
     rho = density(profile, m)
     u = similar(rho)
 
-    D = d2_dr2(resol)
+    D = d2_dr2_vanish_r0(resol)
 
     u .= D \ reshape(r .* rho, resol)
 
