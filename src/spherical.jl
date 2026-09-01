@@ -29,6 +29,7 @@ function drift!(profile::SphericalProfile, m, h::Real, explap)
 
     for field in 1:length(m)
         psi[:, field] .= (explap[:, :, field] * (profile.r .* psi[:, field])) ./ profile.r # u
+        # psi[:, field] .= explap[:, :, field] * psi[:, field] # psi (not u)
     end
 
     return profile
@@ -152,6 +153,15 @@ function d2_dr2(resol)
 
     # Asymptote at R=R_max
     out[resol, resol] = -1.0
+
+    # out = Matrix(out)
+    # out[begin, 1] = 1
+    # out[begin, 2] = -2
+    # out[begin, 3] = 1
+
+    # out[end, end] = 1
+    # out[end, end-1] = -2
+    # out[end, end-2] = 1
 
     return out
 end
