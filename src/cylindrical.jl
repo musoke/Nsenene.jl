@@ -67,7 +67,8 @@ function drift!(profile::CylindricalProfile, m, h::Real, explap)
     explap_z, explap_R = explap
 
     for field in 1:length(m)
-        psi[:, :, field] .= explap_z[:, :, field] * psi[:, :, field] * transpose(explap_R[:, :, field])
+        psi[:, :, field] .=
+            explap_z[:, :, field] * psi[:, :, field] * transpose(explap_R[:, :, field])
     end
 
     return profile
@@ -92,11 +93,10 @@ function compute_explaps_imag(profile::CylindricalProfile, m, h)
 end
 
 function max_time_step(profile::CylindricalProfile)
-
     dR = dR_element(profile)
     dz = dz_element(profile)
 
-    return min(dR, dz)^2/π
+    return min(dR, dz)^2 / π
 end
 
 function density(profile::CylindricalProfile, m)
@@ -176,7 +176,7 @@ function d2_dR2(profile::CylindricalProfile)
 end
 
 function d2_dz2(resol)
-    out = Tridiagonal(ones(resol- 1), -2 * ones(resol), ones(resol- 1))
+    out = Tridiagonal(ones(resol - 1), -2 * ones(resol), ones(resol - 1))
 
     # Vanish at z=z_min
 

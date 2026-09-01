@@ -48,10 +48,9 @@ function compute_explaps_imag(profile::SphericalProfile, m, h)
 end
 
 function max_time_step(profile::SphericalProfile)
-
     dr = dr_element(profile)
 
-    return dr^2/π
+    return dr^2 / π
 end
 
 function dr_element(profile::SphericalProfile)
