@@ -40,7 +40,7 @@ function compute_explaps(profile::SphericalProfile, m, h)
 
     explaps = zeros(resol, resol, nfields)
     for field in 1:nfields
-        explaps[:, :, field] .= exp(-h / 2 / m[1, field] * laplacian_u(profile))
+        explaps[:, :, field] .= exp(+h / 2 / m[1, field] * laplacian_u(profile))
     end
 
     return explaps
