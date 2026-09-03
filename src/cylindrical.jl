@@ -10,6 +10,7 @@ import ..densities
 import ..density
 import ..drift!
 import ..gravitational_potential
+import ..interaction_potential!
 import ..max_time_step
 import ..total_masses
 import ..total_mass
@@ -59,6 +60,18 @@ end
 
 function CylindricalProfile(resol::Integer, length::Real, nfields::Integer)
     return CylindricalProfile(resol, resol, length, length, nfields)
+end
+
+function interaction_potential!(V, profile::CylindricalProfile, m, Lambda)
+    nfields = size(m)[end]
+
+    for field_1 in 1:nfields
+        for field_2 in 1:nfields
+            V[:, :, field_1] +=
+                Lambda[field_1, field_2] * abs2.(profile.psi[:, :, field_2]) / m[field_1] /
+                m[field_2]
+        end
+    end
 end
 
 function drift!(profile::CylindricalProfile, m, h::Real, explap)

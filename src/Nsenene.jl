@@ -7,15 +7,15 @@ export gravitational_potential
 export CylindricalProfile
 export SphericalProfile
 
-function kick_drift_kick!(profile, h, m, target_masses, nsteps)
+function kick_drift_kick!(profile, h, m, Lambda, target_masses, nsteps)
     half_step = true
 
     explaps = compute_explaps_imag(profile, m, h)
 
     for step in 1:nsteps
-        kick!(profile, m, h / 2)
+        kick!(profile, m, Lambda, h / 2)
         drift!(profile, m, h, explaps)
-        kick!(profile, m, h / 2)
+        kick!(profile, m, Lambda, h / 2)
 
         new_masses = total_masses(profile, m)
 
@@ -31,16 +31,24 @@ end
 """
     kick(profile, h, m)
 """
-function kick!(profile, m, h)
+function kick!(profile, m, Lambda, h)
     psi = profile.psi
 
     V = m .* gravitational_potential(profile, m)
+    interaction_potential!(V, profile, m, Lambda)
     @assert size(V) == size(profile.psi)
 
     psi .*= exp.(-h .* V)
 
     return profile
 end
+
+"""
+    interaction_potential!(V, profile, m, Lambda)
+
+Add the interaction potential to the potential array V
+"""
+function interaction_potential! end
 
 function drift! end
 

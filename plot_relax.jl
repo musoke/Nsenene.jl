@@ -46,9 +46,12 @@ function plot_relax()
     m[2] = 1
     @show m
 
+    Lambda = zeros(nfields, nfields)
+    Lambda[2, 1] = Lambda[1, 2] = 0.1
+
     target_masses = zeros(nfields)
-    target_masses[1] = 50.0
-    target_masses[2] = 20.0
+    target_masses[1] = 90.0
+    target_masses[2] = 10.0
     @show target_masses
 
     r = radius(p)
@@ -133,11 +136,11 @@ function plot_relax()
     # Gaussian initial condition in each field
     selectdim(p.psi, ndims(m), 1) .= 100 * exp.(-10r .^ 2)
     selectdim(p.psi, ndims(m), 2) .= 100 * exp.(-10r .^ 2)
-    p.psi[:, :, :] += randn(size(p.psi)) ./ r / 1000
+    p.psi[:, :, :] += randn(size(p.psi)) ./ r / 1
 
     selectdim(ps.psi, ndims(ms), 1) .= 100 * exp.(-10ps.r .^ 2)
     selectdim(ps.psi, ndims(ms), 2) .= 100 * exp.(-10ps.r .^ 2)
-    ps.psi[:, :] += randn(size(ps.psi)) ./ ps.r / 1000
+    ps.psi[:, :] += randn(size(ps.psi)) ./ ps.r / 1
 
     # Careful of fields with no mass
     new_masses = total_masses(p, m)
@@ -195,8 +198,8 @@ function plot_relax()
     @show hs = Nsenene.max_time_step(ps) * 100
 
     @showprogress for i in 1:nits
-        Nsenene.kick_drift_kick!(p, h, m, target_masses, nsteps)
-        Nsenene.kick_drift_kick!(ps, hs, ms, target_masses, nsteps)
+        Nsenene.kick_drift_kick!(p, h, m, Lambda, target_masses, nsteps)
+        Nsenene.kick_drift_kick!(ps, hs, ms, Lambda, target_masses, nsteps)
 
         lines!(
             ax_rho_1_r,
@@ -263,9 +266,9 @@ function plot_relax()
     save("cyl-m=$m-target_masses=$target_masses-r_max=$r_max-rep.pdf", fig)
     # save("cyl-m=$m-target_masses=$target_masses-h=$h-r_max=$r_max.pdf", fig)
 
-    fig_comp = Figure()
-    ax1 = Axis(fig_comp[1, 1])
-    ax2 = Axis(fig_comp[2, 1])
+    fig_comp = Figure(; title=L"$m=%$m$, $\Lambda = %$Lambda$")
+    ax1 = Axis(fig_comp[1, 1]; yscale=Makie.pseudolog10)
+    ax2 = Axis(fig_comp[2, 1]; yscale=Makie.pseudolog10)
 
     lines!(ax1, ps.r, abs2.(ps.psi[:, 1]); label="spherical")
     lines!(
@@ -287,7 +290,7 @@ function plot_relax()
     )
     lines!(ax2, p.z[:, 1], abs2.(p.psi[:, 1, 2]); linestyle=:dot, label="cylindrical, z")
 
-    @show total_masses(ps, ms)
+    fig_comp[1:2, 2] = Legend(fig_comp, ax1, ""; framevisible=false)
 
     save("compare.pdf", fig_comp)
     # save("compare-m=$m-target_masses=$target_masses-r_max=$r_max-rep.pdf", fig_comp)
