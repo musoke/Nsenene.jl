@@ -7,6 +7,7 @@ import ..drift!
 import ..densities
 import ..density
 import ..gravitational_potential
+import ..interaction_potential!
 import ..max_time_step
 import ..total_masses
 
@@ -22,6 +23,18 @@ function SphericalProfile(resol::Integer, length::Real, nfields::Integer)
     psi = zeros(Complex{Float64}, resol, nfields)
 
     return SphericalProfile(r, psi)
+end
+
+function interaction_potential!(V, profile::SphericalProfile, m, Lambda)
+    nfields = size(m)[end]
+
+    for field_1 in 1:nfields
+        for field_2 in 1:nfields
+            V[:, field_1] +=
+                Lambda[field_1, field_2] * abs2.(profile.psi[:, field_2]) / m[field_1] /
+                m[field_2]
+        end
+    end
 end
 
 function drift!(profile::SphericalProfile, m, h::Real, explap)

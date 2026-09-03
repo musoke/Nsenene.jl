@@ -16,6 +16,7 @@ length = 1.0
 nfields = 3
 m_ = 1:nfields
 h = 1e-10
+Lambda = zeros(nfields, nfields)
 
 @testset for profile_type in [CylindricalProfile, SphericalProfile]
     profile = profile_type(resol, length, nfields)
@@ -29,7 +30,7 @@ h = 1e-10
     selectdim(profile.psi, ndims(m), 1) .= 100 * exp.(-10r .^ 2)
 
     density_old = density(profile, m)
-    kick!(profile, m, h)
+    kick!(profile, m, Lambda, h)
     density_new = density(profile, m)
 
     # Imaginary time kick should decrease density everywhere
