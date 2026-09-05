@@ -2,6 +2,7 @@ using CairoMakie
 using LinearAlgebra
 using NPZ
 using Nsenene
+using Nsenene: radius, normalize_mass!
 using ProgressMeter
 
 function add_pyul_soliton!(psi, r, mass)
@@ -23,14 +24,6 @@ function add_pyul_soliton!(psi, r, mass)
             psi[i] += 0
         end
     end
-end
-
-function radius(p::SphericalProfile)
-    return p.r
-end
-
-function radius(p::CylindricalProfile)
-    return @. (p.R^2 + p.z^2)^0.5
 end
 
 function plot_relax()
@@ -142,14 +135,16 @@ function plot_relax()
     selectdim(ps.psi, ndims(ms), 2) .= 100 * exp.(-10ps.r .^ 2)
     ps.psi[:, :] += randn(size(ps.psi)) ./ ps.r / 1
 
-    # Careful of fields with no mass
-    new_masses = total_masses(p, m)
-    @show mass_ratios = target_masses ./ (new_masses + (new_masses .== 0))
-    p.psi .*= reshape(mass_ratios, size(m)) .^ 0.5
+    normalize_mass!(p, m, target_masses)
+    normalize_mass!(ps, ms, target_masses)
+    # # Careful of fields with no mass
+    # new_masses = total_masses(p, m)
+    # @show mass_ratios = target_masses ./ (new_masses + (new_masses .== 0))
+    # p.psi .*= reshape(mass_ratios, size(m)) .^ 0.5
 
-    new_masses = total_masses(ps, ms)
-    @show mass_ratios = target_masses ./ (new_masses + (new_masses .== 0))
-    ps.psi .*= reshape(mass_ratios, size(ms)) .^ 0.5
+    # new_masses = total_masses(ps, ms)
+    # @show mass_ratios = target_masses ./ (new_masses + (new_masses .== 0))
+    # ps.psi .*= reshape(mass_ratios, size(ms)) .^ 0.5
 
     # Plot initial condition
     lines!(

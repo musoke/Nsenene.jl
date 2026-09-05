@@ -2,14 +2,7 @@ import Nsenene: total_mass
 import Nsenene: gravitational_potential
 import Nsenene: kick!, drift!
 import Nsenene: compute_explaps_imag
-
-function radius(p::SphericalProfile)
-    return p.r
-end
-
-function radius(p::CylindricalProfile)
-    return @. (p.R^2 + p.z^2)^0.5
-end
+import Nsenene: radius
 
 resol = 256
 length = 1.0
