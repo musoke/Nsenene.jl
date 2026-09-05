@@ -12,6 +12,7 @@ import ..drift!
 import ..gravitational_potential
 import ..interaction_potential!
 import ..max_time_step
+import ..radius
 import ..total_masses
 import ..total_mass
 
@@ -142,6 +143,10 @@ function total_masses(profile::CylindricalProfile, m)
     @assert size(m) === size(M)
 
     return reshape(M, :)
+end
+
+function radius(p::CylindricalProfile)
+    return @. (p.R^2 + p.z^2)^0.5
 end
 
 function d1_dR1(resol_R)

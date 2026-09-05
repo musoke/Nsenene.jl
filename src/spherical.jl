@@ -9,6 +9,7 @@ import ..density
 import ..gravitational_potential
 import ..interaction_potential!
 import ..max_time_step
+import ..radius
 import ..total_masses
 
 G = 1
@@ -120,6 +121,10 @@ end
 
 function total_masses(profile::SphericalProfile, m)
     return _total_masses(profile.psi, profile.r, m)
+end
+
+function radius(p::SphericalProfile)
+    return p.r
 end
 
 function d2_dr2_vanish_r0(resol)

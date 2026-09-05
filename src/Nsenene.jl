@@ -7,9 +7,71 @@ export gravitational_potential
 export CylindricalProfile
 export SphericalProfile
 
-function kick_drift_kick!(profile, h, m, Lambda, target_masses, nsteps)
-    half_step = true
+"""
+    ground_state(m, Lambda, M, profile_type, resol; r_max=1.0)
 
+Calculate an approximate ground state for particle masses `m`, interactions `Lambda` and total masses `M`.
+"""
+function ground_state(m, Lambda, M, profile_type, resol; r_max=1.0)
+    nfields = size(m)[end]
+
+    profile = profile_type(resol, r_max, nfields)
+    r = Nsenene.radius(profile)
+
+    # Gaussian initial condition in each field
+    selectdim(profile.psi, ndims(m), 1) .= 100 * exp.(-10r .^ 2)
+    selectdim(profile.psi, ndims(m), 2) .= 100 * exp.(-10r .^ 2)
+
+    # Random perturbations
+    profile.psi[:, :, :] += randn(size(profile.psi)) ./ r
+
+    relax!(profile, m, Lambda, M)
+
+    return profile
+end
+
+function relax!(profile, m, Lambda, M; maxsteps=1000, nsteps=10, atol=0, rtol=1e-3)
+    h = max_time_step(profile) * 10
+
+    Nsenene.normalize_mass!(profile, m, M)
+
+    rho_max = Float64[]
+    push!(rho_max, maximum(density(profile, m)))
+
+    converged = false
+
+    for step in nsteps:nsteps:maxsteps
+        kick_drift_kick!(profile, h, m, Lambda, M, nsteps)
+
+        push!(rho_max, maximum(density(profile, m)))
+
+        if isapprox(rho_max[end], rho_max[end - 1]; atol=atol, rtol=rtol)
+            @info "Converged after $step steps"
+            converged = true
+            break
+        end
+    end
+
+    if converged
+    else
+        @error "Relaxation did not converge after $maxsteps steps" rho_max
+    end
+
+    return profile
+end
+
+function normalize_mass!(profile, m, target_masses)
+    current_masses = total_masses(profile, m)
+
+    # Careful of fields with no mass
+    mass_ratios = target_masses ./ (current_masses + (current_masses .== 0))
+
+    profile.psi .*= reshape(mass_ratios, size(m)) .^ 0.5
+
+    return profile
+end
+
+function kick_drift_kick!(profile, h, m, Lambda, target_masses, nsteps)
     explaps = compute_explaps_imag(profile, m, h)
 
     for step in 1:nsteps
@@ -17,12 +79,7 @@ function kick_drift_kick!(profile, h, m, Lambda, target_masses, nsteps)
         drift!(profile, m, h, explaps)
         kick!(profile, m, Lambda, h / 2)
 
-        new_masses = total_masses(profile, m)
-
-        # Careful of fields with no mass
-        mass_ratios = target_masses ./ (new_masses + (new_masses .== 0))
-
-        profile.psi .*= reshape(mass_ratios, size(m)) .^ 0.5
+        normalize_mass!(profile, m, target_masses)
 
         @assert !any(isnan.(profile.psi))
     end
@@ -152,6 +209,8 @@ function total_masses end
 Compute the gravitational potential due to the fields in `profile` with particle masses `m`.
 """
 function gravitational_potential end
+
+function radius end
 
 include("cylindrical.jl")
 include("spherical.jl")

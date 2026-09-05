@@ -25,6 +25,10 @@ end
     include("kick_drift.jl")
 end
 
+@testset "relax" begin
+    include("relax.jl")
+end
+
 @testset "Aqua.jl" begin
     include("aqua.jl")
 end
