@@ -118,6 +118,20 @@ function density(profile::CylindricalProfile, m)
     return dropdims(out; dims=3)
 end
 
+function centers_of_mass_z(profile, m)
+    nfields = size(m)[end]
+    R = profile.R
+    z = profile.z
+    psi = profile.psi
+
+    dR = dR_element(profile)
+    dz = dz_element(profile)
+
+    out = sum(z * R .* abs2.(psi); dims=(1, 2)) .* m * 2pi * dR * dz
+
+    return reshape(out, nfields) ./ total_masses(profile, m)
+end
+
 function dR_element(profile::CylindricalProfile)
     R = profile.R
     return diff(R; dims=2)[1]
