@@ -204,6 +204,51 @@ M[3]
 function total_masses end
 
 """
+    centers_of_mass_z(profile, m)
+
+Compute the z-coordinate of the center of mass for each field in `profile`.
+
+Note:
+
+- If there is no mass in a given field, the center of mass is `NaN`.
+- This always returns zeros if `profile` is a `SphericalProfile`.
+
+# Examples
+```jldoctest
+julia> using Nsenene
+
+julia> resol=32;
+
+julia> ps = SphericalProfile(resol, 3.0, 3);
+
+julia> ps.psi[:, :] = randn(resol, 3);
+
+julia> Nsenene.centers_of_mass_z(ps, ones(1, 3))
+3-element Vector{Float64}:
+ 0.0
+ 0.0
+ 0.0
+
+julia> pc = CylindricalProfile(resol, 3.0, 3);
+
+julia> pc.psi[begin, :, 1] .= randn(resol); # disc of mass at z=-1.5
+
+julia> pc.psi[end, :, 2] .= randn(resol); # disc of mass at z=+1.5
+
+julia> com = Nsenene.centers_of_mass_z(pc, ones(1, 1, 3));
+
+julia> @assert com[1] ≈ pc.z[begin]
+
+julia> @assert com[2] ≈ pc.z[end]
+
+julia> com[3]
+NaN
+
+```
+"""
+function centers_of_mass_z end
+
+"""
     gravitational_potential(profile, m)
 
 Compute the gravitational potential due to the fields in `profile` with particle masses `m`.

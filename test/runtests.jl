@@ -13,10 +13,6 @@ end
     include("total_mass.jl")
 end
 
-@testset "centre of mass" begin
-    include("center_of_mass.jl")
-end
-
 @testset "derivatives" begin
     include("derivatives.jl")
 end
