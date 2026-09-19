@@ -5,6 +5,7 @@ import LinearAlgebra: UniformScaling, Tridiagonal
 using AbstractFFTs: AbstractFFTs
 using FFTW: FFTW
 
+import ..centers_of_mass_z
 import ..compute_explaps_imag
 import ..densities
 import ..density
@@ -13,8 +14,8 @@ import ..gravitational_potential
 import ..interaction_potential!
 import ..max_time_step
 import ..radius
-import ..total_masses
 import ..total_mass
+import ..total_masses
 
 G = 1
 
@@ -118,7 +119,7 @@ function density(profile::CylindricalProfile, m)
     return dropdims(out; dims=3)
 end
 
-function centers_of_mass_z(profile, m)
+function centers_of_mass_z(profile::CylindricalProfile, m)
     nfields = size(m)[end]
     R = profile.R
     z = profile.z

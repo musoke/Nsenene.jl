@@ -2,6 +2,7 @@ module Spherical
 
 import LinearAlgebra: Tridiagonal
 
+import ..centers_of_mass_z
 import ..compute_explaps_imag
 import ..drift!
 import ..densities
@@ -121,6 +122,10 @@ end
 
 function total_masses(profile::SphericalProfile, m)
     return _total_masses(profile.psi, profile.r, m)
+end
+
+function centers_of_mass_z(profile::SphericalProfile, m)
+    return zeros(length(m))
 end
 
 function radius(p::SphericalProfile)
