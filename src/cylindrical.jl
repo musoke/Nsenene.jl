@@ -69,9 +69,15 @@ function interaction_potential!(V, profile::CylindricalProfile, m, Lambda)
 
     for field_1 in 1:nfields
         for field_2 in 1:nfields
-            V[:, :, field_1] +=
-                Lambda[field_1, field_2] * abs2.(profile.psi[:, :, field_2]) / m[field_1] /
-                m[field_2]
+            if field_1 == field_2
+                V[:, :, field_1] +=
+                    0.5 * Lambda[field_1, field_2] * abs2.(profile.psi[:, :, field_2]) /
+                    m[field_1] / m[field_2]
+            else
+                V[:, :, field_1] +=
+                    0.25 * Lambda[field_1, field_2] * abs2.(profile.psi[:, :, field_2]) /
+                    m[field_1] / m[field_2]
+            end
         end
     end
 end
