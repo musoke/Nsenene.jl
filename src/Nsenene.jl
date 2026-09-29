@@ -258,9 +258,11 @@ function gravitational_potential end
 function radius end
 
 include("cylindrical.jl")
-include("spherical.jl")
-
 import .Cylindrical: CylindricalProfile
+
+include("spherical.jl")
 import .Spherical: SphericalProfile
+
+include("energy.jl")
 
 end
