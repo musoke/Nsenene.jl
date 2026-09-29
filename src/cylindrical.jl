@@ -214,6 +214,26 @@ function d2_dR2(profile::CylindricalProfile)
     return d2_dR2(resol_R)
 end
 
+function d1_dz1(resol_z)
+    out = 0.5 * Tridiagonal(-ones(resol_z - 1), zeros(resol_z), ones(resol_z - 1))
+
+    # Forward difference at R=0
+    out[begin, begin] = -1
+    out[begin, begin + 1] = 1
+
+    # Backward difference at R=end
+    out[end, end - 1] = -1
+    out[end, end] = 1
+
+    return out
+end
+
+function d1_dz1(profile::CylindricalProfile)
+    resol_z = size(profile.z, 1)
+
+    return d1_dz1(resol_z)
+end
+
 function d2_dz2(resol)
     out = Tridiagonal(ones(resol - 1), -2 * ones(resol), ones(resol - 1))
 
