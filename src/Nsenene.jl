@@ -30,23 +30,27 @@ function ground_state(m, Lambda, M, profile_type, resol; r_max=1.0)
     return profile
 end
 
-function relax!(profile, m, Lambda, M; maxsteps=1000, nsteps=10, atol=0, rtol=1e-3)
+function relax!(
+    profile, m, Lambda, M; maxsteps=1000, nsteps=10, atol=0, rtol=1e-3, verbose=false
+)
     h = max_time_step(profile) * 10
 
     Nsenene.normalize_mass!(profile, m, M)
 
-    rho_max = Float64[]
-    push!(rho_max, maximum(density(profile, m)))
+    energies = Float64[]
+    push!(energies, energy(profile, m, Lambda))
 
     converged = false
 
     for step in nsteps:nsteps:maxsteps
         kick_drift_kick!(profile, h, m, Lambda, M, nsteps)
 
-        push!(rho_max, maximum(density(profile, m)))
+        push!(energies, energy(profile, m, Lambda))
 
-        if isapprox(rho_max[end], rho_max[end - 1]; atol=atol, rtol=rtol)
-            @info "Converged after $step steps"
+        if isapprox(energies[end], energies[end - 1]; atol=atol, rtol=rtol)
+            if verbose
+                @info "Converged after $step steps" energies
+            end
             converged = true
             break
         end
@@ -54,7 +58,7 @@ function relax!(profile, m, Lambda, M; maxsteps=1000, nsteps=10, atol=0, rtol=1e
 
     if converged
     else
-        @error "Relaxation did not converge after $maxsteps steps" rho_max
+        @error "Relaxation did not converge after $maxsteps steps" energies
     end
 
     return profile
