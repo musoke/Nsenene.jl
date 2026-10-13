@@ -1,14 +1,7 @@
 import Nsenene: total_mass
 import Nsenene: SphericalProfile
 import Nsenene: gravitational_potential
-
-function radius(p::SphericalProfile)
-    return p.r
-end
-
-function radius(p::CylindricalProfile)
-    return @. (p.R^2 + p.z^2)^0.5
-end
+import Nsenene: radius
 
 resol = 1024
 length = 1.0
