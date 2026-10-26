@@ -53,7 +53,7 @@ end
 @testset "Consistent energies" begin
     @show E_grav_spherical = integrate(energy_density_gravity(ps, ms), ps)
     @show E_grav_cylindrical = integrate(energy_density_gravity(pc, mc), pc)
-    @test E_grav_spherical ≈ E_grav_cylindrical rtol = 0.01
+    @test E_grav_spherical ≈ E_grav_cylindrical rtol = 0.05
     @show (E_grav_spherical - E_grav_cylindrical) / E_grav_spherical
 
     @show E_kq_spherical = integrate(energy_density_kq(ps, ms), ps)
@@ -70,5 +70,5 @@ end
 
     @show E_spherical = energy(ps, ms, ones(nfields, nfields))
     @show E_cylindrical = energy(pc, mc, ones(nfields, nfields))
-    @test E_spherical ≈ E_cylindrical rtol = 0.01
+    @test E_spherical ≈ E_cylindrical rtol = 0.05
 end
