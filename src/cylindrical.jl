@@ -270,7 +270,11 @@ function laplacian_z(profile)
     return d2
 end
 
-function gravitational_potential(profile::CylindricalProfile, m)
+function gravitational_potential(profile::CylindricalProfile, m; padding::Real=2.0)
+    if padding < 1
+        throw(DomainError(padding, "padding must not be less than 1"))
+    end
+
     dR = dR_element(profile)
     R = profile.R
     resol_R = size(R, 2)
@@ -278,19 +282,25 @@ function gravitational_potential(profile::CylindricalProfile, m)
     dz = dz_element(profile)
     z = profile.z
     resol_z = size(z, 1)
-    kz = AbstractFFTs.rfftfreq(resol_z, 2pi / dz)
+
+    resol_z_padded = round(Int, resol_z * padding)
+    z_padded = reshape(range(z[1, 1]; step=dz, length=resol_z_padded), resol_z_padded, 1)
+    kz = AbstractFFTs.rfftfreq(resol_z_padded, 2pi / dz)
 
     M = total_mass(profile, m)
     rho = density(profile, m)
 
-    fftz = AbstractFFTs.plan_rfft(rho, 1)
+    rho_padded = zeros(resol_z_padded, resol_R)
+    rho_padded[begin:resol_z, :] .= rho
 
-    rho_Rk = fftz * rho
+    fftz = AbstractFFTs.plan_rfft(rho_padded, 1)
+
+    rho_Rk = fftz * rho_padded
     rho_Rk .*= 4 * pi * G
 
     Phi_Rk = similar(rho_Rk)
 
-    phi_boundary = -G * M ./ sqrt.(R[1, end]^2 .+ z[:, 1] .^ 2)
+    phi_boundary = -G * M ./ sqrt.(R[1, end]^2 .+ z_padded[:, 1] .^ 2)
     phi_boundary_k = AbstractFFTs.rfft(phi_boundary, 1)
 
     @assert size(phi_boundary_k) == size(kz)
@@ -314,7 +324,8 @@ function gravitational_potential(profile::CylindricalProfile, m)
         Phi_Rk[i, :] .= D \ rho_Rk[i, :]
     end
 
-    Phi = AbstractFFTs.irfft(Phi_Rk, resol_z, 1)
+    Phi_padded = AbstractFFTs.irfft(Phi_Rk, resol_z_padded, 1)
+    Phi = Phi_padded[begin:resol_z, :]
 
     return Phi
 end
