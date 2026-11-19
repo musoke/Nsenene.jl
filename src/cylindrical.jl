@@ -1,5 +1,6 @@
 module Cylindrical
 
+import LinearAlgebra: ldiv!
 import LinearAlgebra: UniformScaling, Tridiagonal
 
 using AbstractFFTs: AbstractFFTs
@@ -311,7 +312,7 @@ function gravitational_potential(profile::CylindricalProfile, m)
         D[end, end] = 1
         rho_Rk[i, end] = phi_boundary_k[i]
 
-        Phi_Rk[i, :] .= D \ rho_Rk[i, :]
+        ldiv!(@view(Phi_Rk[i, :]), D, rho_Rk[i, :])
     end
 
     Phi = AbstractFFTs.irfft(Phi_Rk, resol_z, 1)
