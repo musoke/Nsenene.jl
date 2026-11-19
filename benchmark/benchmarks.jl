@@ -12,7 +12,7 @@ m = ones(1);
 Lambda = zeros(nfields)
 h = 1e-10
 
-pc = CylindricalProfile(resol_r, resol_z, length, length, nfields);
+pc = CylindricalProfile(resol_r, resol_z, length, length, nfields; padding=1.0);
 ps = SphericalProfile(resol_r, length, nfields);
 
 exp_laps_c = compute_explaps_imag(pc, ones(1, 1, nfields), h)
