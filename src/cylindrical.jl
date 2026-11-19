@@ -1,6 +1,6 @@
 module Cylindrical
 
-import LinearAlgebra: ldiv!
+import LinearAlgebra: ldiv!, mul!
 import LinearAlgebra: UniformScaling, Tridiagonal
 
 using AbstractFFTs: AbstractFFTs
@@ -23,6 +23,9 @@ G = 1
 """
     struct CylindricalProfile
 
+# Parameters
+`padding` parameter controls how much padding is added to the density when computing the gravitational potential. For efficiency, this padding is fixed for a given `CylindricalProfile`.
+
 # Examples
 
 ```jldoctest
@@ -43,26 +46,77 @@ maximum(p.R)
 
 10.0
 ```
+
+```jldoctest
+julia> using Nsenene
+
+julia> p1 = CylindricalProfile(64, 1.0, 2; padding = 1.0);
+
+julia> p2 = CylindricalProfile(64, 1.0, 2; padding = 2.0);
+
+julia> @assert size(p2._z_padded, 1) == 2size(p1._z_padded, 1) == 128
+
+julia> CylindricalProfile(64, 1.0, 2; padding = 0.99);
+ERROR: DomainError with 0.99:
+padding must not be less than 1
+[...]
+```
 """
 struct CylindricalProfile
     R::Array{Float64,2}
     z::Array{Float64,2}
     psi::Array{Complex{Float64},3}
+    _z_padded::Array{Float64,2}
+    _kz_padded::Array{Float64,1}
+    _rho_padded::Array{Float64,2}
+    _Phi_padded::Array{Float64,2}
+    _rho_Rk::Array{ComplexF64,2}
+    _Phi_Rk::Array{ComplexF64,2}
+    _fftz_padded_plan::FFTW.rFFTWPlan
 end
 
 function CylindricalProfile(
-    resol_R::Integer, resol_z::Integer, length_R::Real, length_z::Real, nfields::Integer
+    resol_R::Integer,
+    resol_z::Integer,
+    length_R::Real,
+    length_z::Real,
+    nfields::Integer;
+    padding::Real=2.0,
 )
     R = reshape(range(length_R / (resol_R + 1), length_R, resol_R), 1, :)  # FIXME: is this the best way to address R=0?
     z = reshape(range(-length_z / 2, +length_z / 2, resol_z), :, 1)
 
     psi = zeros(Complex{Float64}, resol_z, resol_R, nfields)
 
-    return CylindricalProfile(R, z, psi)
+    if padding < 1
+        throw(DomainError(padding, "padding must not be less than 1"))
+    end
+
+    # Pre-allocate arrays for calculation of potential
+    dz = diff(z; dims=1)[1]
+    resol_z_padded = round(Int, resol_z * padding)
+    z_padded = reshape(range(z[1, 1]; step=dz, length=resol_z_padded), resol_z_padded, 1)
+    kz = AbstractFFTs.rfftfreq(resol_z_padded, 2pi / dz)
+
+    rho_padded = Array{Float64,2}(undef, resol_z_padded, resol_R)
+    rho_padded .= 0 # The padding part of rho_padded is assumed to be zero.
+    Phi_padded = Array{Float64,2}(undef, resol_z_padded, resol_R)
+    rho_Rk = Array{ComplexF64,2}(undef, resol_z_padded ÷ 2 + 1, resol_R)
+    Phi_Rk = similar(rho_Rk)
+    fftz_plan = AbstractFFTs.plan_rfft(rho_padded, 1)
+
+    # Compute and cache the inverse transform
+    inv(fftz_plan)
+
+    return CylindricalProfile(
+        R, z, psi, z_padded, kz, rho_padded, Phi_padded, rho_Rk, Phi_Rk, fftz_plan
+    )
 end
 
-function CylindricalProfile(resol::Integer, length::Real, nfields::Integer)
-    return CylindricalProfile(resol, resol, length, length, nfields)
+function CylindricalProfile(
+    resol::Integer, length::Real, nfields::Integer; padding::Real=2.0
+)
+    return CylindricalProfile(resol, resol, length, length, nfields; padding=padding)
 end
 
 function interaction_potential!(V, profile::CylindricalProfile, m, Lambda)
@@ -271,11 +325,7 @@ function laplacian_z(profile)
     return d2
 end
 
-function gravitational_potential(profile::CylindricalProfile, m; padding::Real=2.0)
-    if padding < 1
-        throw(DomainError(padding, "padding must not be less than 1"))
-    end
-
+function gravitational_potential(profile::CylindricalProfile, m)
     dR = dR_element(profile)
     R = profile.R
     resol_R = size(R, 2)
@@ -284,22 +334,21 @@ function gravitational_potential(profile::CylindricalProfile, m; padding::Real=2
     z = profile.z
     resol_z = size(z, 1)
 
-    resol_z_padded = round(Int, resol_z * padding)
-    z_padded = reshape(range(z[1, 1]; step=dz, length=resol_z_padded), resol_z_padded, 1)
-    kz = AbstractFFTs.rfftfreq(resol_z_padded, 2pi / dz)
+    z_padded = profile._z_padded
+    resol_z_padded = size(z_padded, 1)
+    kz = profile._kz_padded
 
-    M = total_mass(profile, m)
+    M = total_mass(profile, m) # TODO: total_mass uses the density, which is recalculated later
     rho = density(profile, m)
 
-    rho_padded = zeros(resol_z_padded, resol_R)
+    rho_padded = profile._rho_padded
     rho_padded[begin:resol_z, :] .= rho
 
-    fftz = AbstractFFTs.plan_rfft(rho_padded, 1)
-
-    rho_Rk = fftz * rho_padded
+    rho_Rk = profile._rho_Rk
+    mul!(rho_Rk, profile._fftz_padded_plan, rho_padded)
     rho_Rk .*= 4 * pi * G
 
-    Phi_Rk = similar(rho_Rk)
+    Phi_Rk = profile._Phi_Rk
 
     phi_boundary = -G * M ./ sqrt.(R[1, end]^2 .+ z_padded[:, 1] .^ 2)
     phi_boundary_k = AbstractFFTs.rfft(phi_boundary, 1)
@@ -325,7 +374,8 @@ function gravitational_potential(profile::CylindricalProfile, m; padding::Real=2
         ldiv!(@view(Phi_Rk[i, :]), D, rho_Rk[i, :])
     end
 
-    Phi_padded = AbstractFFTs.irfft(Phi_Rk, resol_z_padded, 1)
+    Phi_padded = profile._Phi_padded
+    ldiv!(Phi_padded, profile._fftz_padded_plan, Phi_Rk)
     Phi = Phi_padded[begin:resol_z, :]
 
     return Phi
